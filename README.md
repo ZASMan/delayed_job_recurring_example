@@ -108,7 +108,7 @@ end
 ```
 class EmailLog < ActiveRecord::Base
   belongs_to :email_loggable, polymorphic: true
-  belongs_to :passport, foreign_key: 'email_loggable_id', class_name: 'User'
+  belongs_to :user, foreign_key: 'email_loggable_id', class_name: 'User'
 
   EMAIL_LOG_TYPES = {
     confirmation_reminder: 'user confirmation email'
