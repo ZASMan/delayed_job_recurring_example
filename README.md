@@ -31,3 +31,22 @@ class UserMailer < ApplicationMailer
   end
 end
 ```
+
++ Now let's use the `delayed_job_recurring` gem to schedule this task to run every day. Here's an example, which is described more or less as in the documentation:
+
+```
+module Recurring
+  class ScheduledReminderEmail
+    include Delayed::RecurringJob
+    run_every 1.day
+    run_at '12:00am'
+    timezone 'Eastern Time (US & Canada)'
+    queue 'slow-jobs'
+    def perform
+      users = User.all
+      users.each do |user|
+        UserMailer.registration_confirmation_reminder_email(user).deliver_now
+      end
+    end
+  end
+```
