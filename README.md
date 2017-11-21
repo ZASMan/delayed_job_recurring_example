@@ -3,11 +3,10 @@
 At some point in your work as a Rails developer, your application will go beyond a trivial MVC architecture to require some automated processes to run in the background. In this tutorial, we'll apply agile development principles and user-centric design to fulfill the needs of the task by approaching it as a user story. We will:
 
 1. Create a background process to send automated emails using the [`delayed_job_recurring`](https://github.com/amitree/delayed_job_recurring) and [`delayed_job_active_record`](https://github.com/collectiveidea/delayed_job_active_record) gems
-2. Set up a background process to load them up with the [`after_party`](https://github.com/theSteveMitchell/after_party) gem.
+2. Set up a background process to load them up with the [`after_party`](https://github.com/theSteveMitchell/after_party) gem and assure that the delayed jobs to run the background processes are only created once.
 3. Design an `EmailLog` model to assure that the emails are only sent once.
-4. Design a `JobReport` model to an example of how to create a model for the logging whether or not the jobs run in the database, and how to assure that the emails only send once.
-5. Apply DRY principles to refactor code where necessary.
-6. Test the code with Rspec.
+4. Design a `JobReport` model to help keep track of the delayed jobs in the database.
+5. Plan ahead, and take into consideration design, especially when changing your database.
 
 Let's take an agile approach and approach this task as a user story:
 
@@ -192,3 +191,66 @@ end
 ```
 
 + After that, you can create an index page for the email logs to display them to your end user.
+
+
++ Now, lets go back to the recurring jobs. If you recall, we want to add something to the front end to assure that the job is created. We can go about this by creating a new model, `JobReport`, and creating a job report each time the recurring task is successfully created. Design it however you want, ideally similar to the `EmailLog` object- like providing a description to the end user. 
+
+
+```
+module Recurring
+  class ScheduledReminderEmail
+    include Delayed::RecurringJob
+    run_every 1.day
+    run_at '12:00am'
+    timezone 'Eastern Time (US & Canada)'
+    queue 'slow-jobs'
+    def perform
+      users = User.all_unconfirmed
+      users.each do |user|
+        UserMailer.registration_confirmation_reminder_email(user).deliver_now
+      end
+    end
+  end
+  
+    def create_report
+      # Stop the creation of the report if the job already exists
+      return false unless Delayed::Job.count.positive?
+      # These will take info from the last job created.
+      # Check the delayed job documentation/your database
+      # For information on the Delayed::Job objects.
+      last_job = Delayed::Job.last
+      job_run_date = last_job.run_at.to_s
+      job_run_time = last_job.run_at.hour.to_s + ":00"
+      JobReport.create!(
+        job_name: 'delayed user registrations reminder',
+        description: "Recurring task created for delayed user registrations" \
+        " created on deployment on #{Date.today}. Task will first run at #{job_run_time} on #{job_run_date}."
+      )
+    end
+  end
+```
+
++ Create a job report index page to display the report information to the end user.
+
++ Now, let's add that job report creation method to the after party task and also update the task to assure that the delayed job task won't be created multiple times in the database (since after party is run after each deployment):
+
+```
+namespace :after_party do
+  desc 'Deployment task: send_registration_confirmation_emails'
+  task registration_confirmation_emails: :environment do
+    puts "Running deploy task 'registration_confirmation_emails'"
+    # Inspect the Delayed::Job object in your database for more info on the handler atribute
+    # This will delete the old version of the job and create a new one on each deployment
+    job_handler_like = '(handler LIKE ?)', '--- !ruby/object:Recurring::ScheduledReminderEmail%'
+    Delayed::Job.where(job_handler_like).destroy_all
+    Recurring::ScheduledReminderEmail.schedule!
+    # Create Job Report
+    Recurring::ScheduledReminderEmail.create_report
+    # Add an extra line for the command line for quick reference if you like
+    puts 'Delayed Job Created for Scheduled Reminder Emails' if Delayed::Job.where(job_handler_like).present?
+  end
+end
+
+```
+
++ And that's it! You'll have satisfied all criteria of the user story. Hope this provided some help on how to use the delayed jobs gem and design it with a user centered approach!
