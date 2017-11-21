@@ -79,3 +79,44 @@ end
 ```
 
 + This should set up the task to run after every deployment, and solves most of the criteria. But we also have to answer another part of the user story, the `user` part- the experience of the administrator: that the user should receive a **single** email. In addition, how can we assure to the administrator that the emails are being sent out to recently created users? Moreover, with all of this happening on the backend on the server, how can we as a developer assure that the background process assure that the recurring job isn't being created multiple times after deployment?
+
++ First, create an `EmailLog` model to log all emails being sent. Because it seems logical that other emails might be sent for other objects in the future (I.E. the email log can belong to more than just a 'user', lets utilize polymorphic association to create the email log object, and have it belong to an `email_loggable` object. Here's what the migration could look like:
+
+```
+class CreateEmailLogs < ActiveRecord::Migration[5.0]
+  def change
+    create_table :email_logs do |t|
+      t.string :email_type
+      t.string :email_loggable_type
+      t.text :description
+      t.references ::email_loggable_id, foreign_key: true
+
+      t.timestamps
+    end
+  end
+end
+```
++ The relationship between the user/email log can look like so:
+```
+class EmailLog < ActiveRecord::Base
+  belongs_to :email_loggable, polymorphic: true
+  belongs_to :passport, foreign_key: 'email_loggable_id', class_name: 'User'
+
+  EMAIL_LOG_TYPES = {
+    confirmation_reminder: 'user confirmation email'
+  }.freeze
+
+  # Here in the future you might have email loggable types as 'post' or 'comment' or whatever you'd like emails for
+  EMAIL_LOGGABLE_TYPES = {
+    user: 'user',
+  }.freeze
+end
+
+class User < ActiveRecord::Base
+  has_many :email_logs, as: :email_loggable, dependent: :destroy
+  scope :all_unconfirmed, -> { where(is_confirmed: false, account_created_at: Date.today - 1.week ) }
+end
+
+
+```
+
