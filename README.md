@@ -90,6 +90,8 @@ end
 + First, create an `EmailLog` model to log all emails being sent. **Note:** Because it seems logical that other emails might be sent for other objects in the future (I.E. the email log can belong to more than just a 'user', lets utilize polymorphic association to create the email log object, and have it belong to an `email_loggable` object. Here's what the migration could look like:
 
 ```
+# The 'description' will help when you create a view for this and
+# provide an accurate description of the email task to your end user, the administrator
 class CreateEmailLogs < ActiveRecord::Migration[5.0]
   def change
     create_table :email_logs do |t|
@@ -127,3 +129,66 @@ end
 
 ```
 
++ We should then create an `EmailLog` record each time after an email is sent. Because this could be used in multiple mailers, let's add it to the `ApplicationMailer` so all other mailers can inherit it.
+
+
+```
+class ApplicationMailer < ActionMailer::Base
+  def create_email_log(email_type, email_address, loggable_id, loggable_type)
+    EmailLog.create!(
+      email_type: email_type,
+      email_loggable_id: loggable_id,
+      email_loggable_type: loggable_type,
+      description: "sent to #{email_address} on #{Date.today}."
+    )
+  end
+end
+```
+
++ Now let's add that method to be executed at the end of the user mailer method to create the record.
+
+```
+  def registration_confirmation_reminder_email(user)
+    @user = user
+    email_address = @user.email
+    email_type = 'user confirmation email'
+    loggable_id = @user.id
+    loggable_type = 'user'
+    mail(
+      to: email_address,
+      subject: "Reminder to Confirm Registration",
+      template_path: 'user_mailer',
+      template_name: 'registration_confirmation_reminder'
+    )
+    create_email_log(email_type, email_address, loggable_id, loggable_type)
+  end
+```
+
++ Now assuring that the email sends only once becomes possible. Let's add the following to our `apps/models/user.rb`:
+```
+  def email_already_sent?(email_type)
+    EmailLog.where(email_loggable_id: id, email_type: email_type).present?
+  end
+  ```
++ And update the mailer to stop the mailer method if the email has indeed been sent:
+
+```
+  def registration_confirmation_reminder_email(user)
+    @user = user
+    email_address = @user.email
+    email_type = 'user confirmation email'
+    loggable_id = @user.id
+    loggable_type = 'user'
+    # This will stop the email from being sent
+    return false if user.email_already_sent?(email_type)
+    mail(
+      to: email_address,
+      subject: "Reminder to Confirm Registration",
+      template_path: 'user_mailer',
+      template_name: 'registration_confirmation_reminder'
+    )
+    create_email_log(email_type, email_address, loggable_id, loggable_type)
+  end
+```
+
++ After that, you can create an index page for the email logs to display them to your end user.
