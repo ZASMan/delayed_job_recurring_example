@@ -2,6 +2,10 @@
 
 At some point in your work as a Rails developer, you'll need some automated background tasks. In this tutorial, you'll learn how to create a background process to send automated emails using the [`delayed_job_recurring`](https://github.com/amitree/delayed_job_recurring) and [`delayed_job_active_record`](https://github.com/collectiveidea/delayed_job_active_record) gems, how to load them up with the [`after_party`](https://github.com/theSteveMitchell/after_party) gem, an example of how to create a model for the logging whether or not the jobs run in the database, and how to assure that the emails only send once.
 
+Let's take an agile approach and approach this task as a user story:
+
+`As a an administrator of the application, I would like users to receive a reminder email to confirm their accounts if they are not confirmed a week after registration, to assure that users confirm their accounts in a timely manner.`
+
 + Let's start with the necessary gems:
 
 ```
@@ -15,7 +19,7 @@ gem 'delayed_job_active_record'
 gem 'delayed_job_recurring'
 ```
 
-+ Before we move on to the recurring job, let's take a look at the example email that we'd like to run. Here's an example of what it could look like:
++ Before we move on to the recurring job, let's take a look at the example email that we'd like to run.  Here's an example of what it could look like:
 
 ```
 class UserMailer < ApplicationMailer
