@@ -64,3 +64,17 @@ module Recurring
     end
   end
 ```
+
++ Now, lets use the after party gem to create a rake task to execute the recurring task. I like using after party because you can easily set it up to run `rake after_party:run` after every deployment.
+
+```
+namespace :after_party do
+  desc 'Deployment task: send_registration_confirmation_emails'
+  task registration_confirmation_emails: :environment do
+    puts "Running deploy task 'registration_confirmation_emails'"
+    Recurring::ScheduledReminderEmail.schedule!
+  end
+end
+
+```
+
