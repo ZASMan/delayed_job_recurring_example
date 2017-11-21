@@ -4,7 +4,7 @@ At some point in your work as a Rails developer, you'll need some automated back
 
 Let's take an agile approach and approach this task as a user story:
 
-`As a an administrator of the application, I would like users to receive a reminder email to confirm their accounts if they are not confirmed a week after registration, to assure that users confirm their accounts in a timely manner.`
+*As a an administrator of the application, I would like users to receive a reminder email to confirm their accounts if they are not confirmed a week after registration, to assure that users confirm their accounts in a timely manner.*
 
 + Let's start with the necessary gems:
 
