@@ -4,7 +4,7 @@ At some point in your work as a Rails developer, you'll need some automated back
 
 Let's take an agile approach and approach this task as a user story:
 
-*As a an administrator of the application, I would like users to receive a reminder email to confirm their accounts if they are not confirmed a week after registration, to assure that users confirm their accounts in a timely manner.*
+*As a an administrator of the application, I would like users to receive a single reminder email to confirm their accounts if they are not confirmed a week after registration, to assure that users confirm their accounts in a timely manner.*
 
 
 + The first thing you'll need to do is create a scope for those unconfirmed users. This could look like the following:
@@ -78,3 +78,4 @@ end
 
 ```
 
++ This should set up the task to run after every deployment, and solves most of the criteria. But we also have to answer another part of the user story, the `user` part- the experience of the administrator: that the user should receive a **single** email. In addition, how can we assure to the administrator that the emails are being sent out to recently created users? Moreover, with all of this happening on the backend on the server, how can we as a developer assure that the background process assure that the recurring job isn't being created multiple times after deployment?
