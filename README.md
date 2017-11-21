@@ -6,6 +6,16 @@ Let's take an agile approach and approach this task as a user story:
 
 *As a an administrator of the application, I would like users to receive a reminder email to confirm their accounts if they are not confirmed a week after registration, to assure that users confirm their accounts in a timely manner.*
 
+
++ The first thing you'll need to do is create a scope for those unconfirmed users. This could look like the following:
+```
+class User < ActiveRecord::Base
+  scope :all_unconfirmed, -> { where(is_confirmed: false, account_created_at: Date.today - 1.week ) }
+end
+```
+
+Now that we have a scope for the users, let's move onto the task.
+
 + Let's start with the necessary gems:
 
 ```
@@ -47,7 +57,7 @@ module Recurring
     timezone 'Eastern Time (US & Canada)'
     queue 'slow-jobs'
     def perform
-      users = User.all
+      users = User.all_unconfirmed
       users.each do |user|
         UserMailer.registration_confirmation_reminder_email(user).deliver_now
       end
