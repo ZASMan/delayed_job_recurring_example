@@ -1,6 +1,13 @@
 # delayed_job_recurring_example
 
-At some point in your work as a Rails developer, you'll need some automated background tasks. In this tutorial, you'll learn how to create a background process to send automated emails using the [`delayed_job_recurring`](https://github.com/amitree/delayed_job_recurring) and [`delayed_job_active_record`](https://github.com/collectiveidea/delayed_job_active_record) gems, how to load them up with the [`after_party`](https://github.com/theSteveMitchell/after_party) gem, an example of how to create a model for the logging whether or not the jobs run in the database, and how to assure that the emails only send once.
+At some point in your work as a Rails developer, your application will go beyond a trivial MVC architecture to require some automated processes to run in the background. In this tutorial, we'll apply agile development principles and user-centric design to fulfill the needs of the task by approaching it as a user story. We will:
+
+1. Create a background process to send automated emails using the [`delayed_job_recurring`](https://github.com/amitree/delayed_job_recurring) and [`delayed_job_active_record`](https://github.com/collectiveidea/delayed_job_active_record) gems
+2. Set up a background process to load them up with the [`after_party`](https://github.com/theSteveMitchell/after_party) gem.
+3. Design an `EmailLog` model to assure that the emails are only sent once.
+4. Design a `JobReport` model to an example of how to create a model for the logging whether or not the jobs run in the database, and how to assure that the emails only send once.
+5. Apply DRY principles to refactor code where necessary.
+6. Test the code with Rspec.
 
 Let's take an agile approach and approach this task as a user story:
 
@@ -80,7 +87,7 @@ end
 
 + This should set up the task to run after every deployment, and solves most of the criteria. But we also have to answer another part of the user story, the `user` part- the experience of the administrator: that the user should receive a **single** email. In addition, how can we assure to the administrator that the emails are being sent out to recently created users? Moreover, with all of this happening on the backend on the server, how can we as a developer assure that the background process assure that the recurring job isn't being created multiple times after deployment?
 
-+ First, create an `EmailLog` model to log all emails being sent. Because it seems logical that other emails might be sent for other objects in the future (I.E. the email log can belong to more than just a 'user', lets utilize polymorphic association to create the email log object, and have it belong to an `email_loggable` object. Here's what the migration could look like:
++ First, create an `EmailLog` model to log all emails being sent. **Note:** Because it seems logical that other emails might be sent for other objects in the future (I.E. the email log can belong to more than just a 'user', lets utilize polymorphic association to create the email log object, and have it belong to an `email_loggable` object. Here's what the migration could look like:
 
 ```
 class CreateEmailLogs < ActiveRecord::Migration[5.0]
